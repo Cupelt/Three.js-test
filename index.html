@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>testing</title>
+
+        <style>
+            body { margin: 0; }
+            canvas { display: block; }
+        </style>
+    </head>
+
+    <body>
+        <canvas id="canvas"></canvas>
+
+        <script type="importmap">
+            {
+                "imports": {
+                    "three": "https://unpkg.com/three@0.156.1/build/three.module.js",
+                    "FBXLoader" : "https://unpkg.com/three@0.156.1/examples/jsm/loaders/FBXLoader.js",
+                    "OrbitControls": "https://unpkg.com/three@0.156.1/examples/jsm/controls/OrbitControls.js"
+                }
+            }
+        </script>
+
+        <script type="module">
+            import {FBXLoader} from 'FBXLoader';
+            import * as THREE from 'three';
+            import { OrbitControls } from 'OrbitControls';
+
+            let scene = new THREE.Scene();
+            let renderer = new THREE.WebGLRenderer({
+                canvas : document.querySelector("#canvas")
+            });
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+
+            let camera = new THREE.PerspectiveCamera(30, 300 / 300, 0.1, 1000);
+            camera.position.set(0, 0, 240);
+            scene.background = new THREE.Color(0x010101);
+
+            // Add a directional light
+            const forntLight = new THREE.DirectionalLight(0xfffffff, 1);
+            forntLight.position.set(1, 1, 1).normalize();
+
+            const backLight = new THREE.DirectionalLight(0xfffffff, 1);
+            backLight.position.set(-1, -1, -1).normalize();
+
+            scene.add(forntLight);
+            scene.add(backLight);
+
+            const particlesGeometry = new THREE.BufferGeometry()
+            const count = 5000
+
+            const positions = new Float32Array(count * 30)
+
+            for(let i = 0; i < count * 3; i++)
+            {
+                positions[i] = (Math.random() - 0.5) * 400
+            }
+
+            particlesGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+
+            // Material
+            const particlesMaterial = new THREE.PointsMaterial();
+            particlesMaterial.size = 0.2;
+            particlesMaterial.sizeAttenuation = true;
+
+            // Points
+            const particles = new THREE.Points(particlesGeometry, particlesMaterial);
+            scene.add(particles);
+
+            // Initialize OrbitControls
+            const controls = new OrbitControls(camera, renderer.domElement);
+            controls.update();
+
+            const loader = new FBXLoader();
+            loader.load(
+                'models/guitar/Guitar.fbx',
+                model => {
+                    scene.add(model);
+                    animate();
+                    renderer.render(scene, camera)
+                },
+                undefined,
+                error => {
+                    console.error('An error occurred while loading the model:', error);
+                }
+            );
+
+            onWindowResize();
+            function animate() {
+                requestAnimationFrame(animate);
+                controls.update();
+                renderer.render(scene, camera);
+            }
+
+            function onWindowResize() {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setPixelRatio(window.devicePixelRatio);
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+
+            window.addEventListener('resize', onWindowResize, false);
+
+        </script>
+    </body>
+</html>
